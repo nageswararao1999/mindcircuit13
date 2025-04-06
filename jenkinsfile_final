@@ -1,22 +1,19 @@
 pipeline {
     agent any
 
-
-       tools {
+    tools {
         maven 'maven3'
     }
 
     stages {
-      stage('checkout') {
+        stage('checkout') {
             steps {
                 echo 'Cloning GIT HUB Repo '
-				git branch: 'main', url: 'https://github.com/devopstraininghub/mindcircuit13.git'
+                git branch: 'main', url: 'https://github.com/nageswararao1999/mindcircuit13.git'
             }  
         }
-		
-		
-		
-	 stage('sonar') {
+
+        stage('sonar') {
             steps {
                 echo 'scanning project'
                 sh 'ls -ltr'
@@ -25,74 +22,53 @@ pipeline {
                       -Dsonar.host.url=http://44.210.116.12:9000 \\
                       -Dsonar.login=squ_11024d4995465fa9d3d4ced15b0281cbadfe6877'''
             }
-    	}
-		
-		
-		
+        }
+
         stage('Build Artifact') {
             steps {
                 echo 'Build Artifact'
-				sh 'mvn clean package'
+                sh 'mvn clean package'
             }
         }
-		
-		
-		
+
         stage('Docker Image') {
             steps {
                 echo 'Docker Image building'
-				sh 'docker build -t devopshubg333/batch13:${BUILD_NUMBER} .'
+                sh 'docker build -t nageswararao1999/batch13:${BUILD_NUMBER} .'
             }
         }
-		
-		
-       stage('Push to Dockerhub') {
+
+        stage('Push to Dockerhub') {
             steps {
-			 script {
-			withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) 
-			{
-            sh 'docker login -u devopshubg333 -p ${dockerhub}'
-			
-			 }
-			   sh 'docker push devopshubg333/batch13:${BUILD_NUMBER}'
-			   
-           
-				}
-				
+                script {
+                    withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+                        sh 'docker login -u nageswararao1999 -p ${dockerhub}'
+                    }
+                    sh 'docker push nageswararao1999/batch13:${BUILD_NUMBER}'
+                }
             }
         }
-		
-		
-    stage('Update Deployment File') {
-		
-		 environment {
-            GIT_REPO_NAME = "mindcircuit13"
-            GIT_USER_NAME = "devopstraininghub"
-        }
-		
+
+        stage('Update Deployment File') {
+            environment {
+                GIT_REPO_NAME = "mindcircuit13"
+                GIT_USER_NAME = "nageswararao1999"
+            }
+
             steps {
                 echo 'Update Deployment File'
-				withCredentials([string(credentialsId: 'githubtoken', variable: 'githubtoken')]) 
-				{
-                  sh '''
-                    git config user.email "gorekarmadhu@gmail.com"
-                    git config user.name "Madhu"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/batch13:.*/batch13:${BUILD_NUMBER}/g" deploymentfiles/deployment.yml
-                    git add .
-                    
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-
-                    git push https://${githubtoken}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                '''
-				  
-                 }
-				
+                withCredentials([string(credentialsId: 'githubtoken', variable: 'githubtoken')]) {
+                    sh '''
+                        git config user.email "your-email@example.com"
+                        git config user.name "Nageswararao"
+                        BUILD_NUMBER=${BUILD_NUMBER}
+                        sed -i "s/batch13:.*/batch13:${BUILD_NUMBER}/g" deploymentfiles/deployment.yml
+                        git add .
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                        git push https://${githubtoken}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                    '''
+                }
             }
         }
-		
-		
-			
     }
-
 }
